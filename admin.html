@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relevanter — Админ-панель</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F5F0EB;
+      --surface: #FFFFFF;
+      --accent: #E16349;
+      --accent-light: #FDF0ED;
+      --text-primary: #1A1A1A;
+      --text-secondary: #6B6B6B;
+      --text-muted: #A0A0A0;
+      --border: #E8E2DC;
+      --font-heading: 'Unbounded', sans-serif;
+      --font-body: 'Geologica', sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .admin-card {
+      background: var(--surface);
+      border-radius: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      padding: 40px;
+      max-width: 520px;
+      width: 100%;
+    }
+
+    .admin-card h1 {
+      font-family: var(--font-heading);
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .admin-card p.sub {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+    }
+
+    .field { margin-bottom: 20px; }
+    .field label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .field .hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .field input, .field textarea {
+      width: 100%;
+      font-family: var(--font-body);
+      font-size: 15px;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field input:focus, .field textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(225,99,73,0.12);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 10px 20px;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .btn--accent { background: var(--accent); color: white; }
+    .btn--accent:hover { background: #cc5540; }
+
+    .btn--secondary {
+      background: var(--surface);
+      color: var(--text-primary);
+      border: 1.5px solid var(--border);
+      margin-top: 8px;
+    }
+
+    .msg {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+    .msg--ok { background: #e8f5e9; color: #2e7d32; display: block; }
+    .msg--err { background: #fdecea; color: #c62828; display: block; }
+
+    /* Login screen */
+    #login-screen, #admin-screen { display: none; }
+    #login-screen.active, #admin-screen.active { display: block; }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .back-link:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="admin-card">
+
+    <!-- Login -->
+    <div id="login-screen" class="active">
+      <h1>Админ-панель</h1>
+      <p class="sub">Введите пароль для доступа к настройкам</p>
+      <div class="field">
+        <label for="admin-password">Пароль</label>
+        <input type="password" id="admin-password" placeholder="Введите пароль">
+      </div>
+      <button class="btn btn--accent" id="login-btn">Войти</button>
+      <div class="msg" id="login-msg"></div>
+      <a href="/" class="back-link">← Вернуться на сайт</a>
+    </div>
+
+    <!-- Admin panel -->
+    <div id="admin-screen">
+      <h1>Настройки Relevanter</h1>
+      <p class="sub">Изменения применяются мгновенно</p>
+
+      <div class="field">
+        <label for="setting-tg-link">Ссылка Telegram менеджера</label>
+        <div class="hint">Используется в кнопке "Оставить заявку" в шапке. Например: https://t.me/username</div>
+        <input type="text" id="setting-tg-link" placeholder="https://t.me/username">
+      </div>
+
+      <div class="field">
+        <label for="setting-cta-text">Текст кнопки в шапке</label>
+        <input type="text" id="setting-cta-text" placeholder="Оставить заявку">
+      </div>
+
+      <div class="field">
+        <label for="setting-copyright">Текст копирайта</label>
+        <input type="text" id="setting-copyright" placeholder="© 2025 WMT AI · Relevanter">
+      </div>
+
+      <button class="btn btn--accent" id="save-btn">Сохранить настройки</button>
+      <button class="btn btn--secondary" id="logout-btn">Выйти</button>
+      <div class="msg" id="save-msg"></div>
+
+      <a href="/" class="back-link">← Вернуться на сайт</a>
+
+      <div style="margin-top: 28px; padding-top: 20px; border-top: 1.5px solid var(--border);">
+        <p style="font-size: 13px; color: var(--text-muted);">
+          <strong>Telegram Bot Token</strong> и <strong>Chat ID</strong> настраиваются через
+          Vercel Dashboard → Settings → Environment Variables.
+          Переменные: <code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code>.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
