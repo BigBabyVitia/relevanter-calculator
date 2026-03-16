@@ -99,9 +99,31 @@ function calculate() {
 
   animateValue(resultEls.total, totalBeforeBonus, formatCurrency);
 
-  // Bonus bar
-  const maxThreshold = 3_000_000;
-  const fillPercent = Math.min(100, (operationsCost / maxThreshold) * 100);
+  // Bonus bar — fill aligned with evenly-spaced tier markers
+  const tierThresholds = [300_000, 500_000, 700_000, 1_500_000, 3_000_000];
+  const tierCount = tierThresholds.length;
+  let fillPercent = 0;
+
+  if (operationsCost >= tierThresholds[tierCount - 1]) {
+    fillPercent = 100;
+  } else if (operationsCost <= 0) {
+    fillPercent = 0;
+  } else {
+    // Find which segment we're in
+    for (let i = 0; i < tierCount; i++) {
+      const segStart = i === 0 ? 0 : tierThresholds[i - 1];
+      const segEnd = tierThresholds[i];
+      const posStart = i === 0 ? 0 : (i / tierCount) * 100;
+      const posEnd = ((i + 1) / tierCount) * 100;
+
+      if (operationsCost < segEnd) {
+        const progress = (operationsCost - segStart) / (segEnd - segStart);
+        fillPercent = posStart + progress * (posEnd - posStart);
+        break;
+      }
+    }
+  }
+
   resultEls.bonusBarFill.style.width = fillPercent + '%';
 
   // Highlight active tiers
