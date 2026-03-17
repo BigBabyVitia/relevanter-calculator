@@ -16,6 +16,13 @@ const BONUS_TIERS = [
   { threshold:   300_000, bonus: 0.015 },
 ];
 
+const PERIODS = [
+  { months: 1,  label: 'Месяц' },
+  { months: 3,  label: 'Квартал' },
+  { months: 6,  label: 'Полугодие' },
+  { months: 12, label: 'Год' },
+];
+
 // ---- DOM refs ----
 const inputs = {
   recruiters: document.getElementById('recruiters_count'),
@@ -25,11 +32,6 @@ const inputs = {
 };
 
 const resultEls = {
-  subscription:       document.getElementById('result-subscription'),
-  subscriptionDetail: document.getElementById('result-subscription-detail'),
-  operations:         document.getElementById('result-operations'),
-  operationsDetail:   document.getElementById('result-operations-detail'),
-  total:              document.getElementById('result-total'),
   bonusBarFill:       document.getElementById('bonus-bar-fill'),
   bonusInfo:          document.getElementById('bonus-info'),
   totalFinal:         document.getElementById('total-final'),
@@ -46,17 +48,84 @@ function formatCurrency(n) {
   return formatNumber(n) + ' ₽';
 }
 
-// Parse number from formatted input
+// Safe math expression evaluator (no eval, supports parentheses)
+function safeCalc(expr) {
+  const clean = expr.replace(/[^0-9*/+\-()]/g, '');
+  if (!clean) return 0;
+  try {
+    return Math.max(0, Math.round(evalExpr(clean)));
+  } catch {
+    return 0;
+  }
+}
+
+// Recursive descent parser: expr → term ((+|-) term)*
+// term → factor ((*|/) factor)*
+// factor → number | '(' expr ')'
+function evalExpr(str) {
+  let pos = 0;
+
+  function parseExpr() {
+    let result = parseTerm();
+    while (pos < str.length && (str[pos] === '+' || str[pos] === '-')) {
+      const op = str[pos++];
+      const right = parseTerm();
+      result = op === '+' ? result + right : result - right;
+    }
+    return result;
+  }
+
+  function parseTerm() {
+    let result = parseFactor();
+    while (pos < str.length && (str[pos] === '*' || str[pos] === '/')) {
+      const op = str[pos++];
+      const right = parseFactor();
+      if (op === '*') result *= right;
+      else result = right === 0 ? 0 : result / right;
+    }
+    return result;
+  }
+
+  function parseFactor() {
+    if (str[pos] === '(') {
+      pos++; // skip '('
+      const result = parseExpr();
+      if (str[pos] === ')') pos++; // skip ')'
+      return result;
+    }
+    let numStr = '';
+    while (pos < str.length && /\d/.test(str[pos])) {
+      numStr += str[pos++];
+    }
+    return parseInt(numStr, 10) || 0;
+  }
+
+  return parseExpr();
+}
+
+// Check if string contains a math operator or parenthesis
+function hasOperator(str) {
+  return /[*/+\-()]/.test(str) && /\d/.test(str);
+}
+
+// Parse number from formatted input (supports math expressions)
 function parseInputValue(input) {
-  const raw = input.value.replace(/\s/g, '').replace(/[^0-9]/g, '');
-  return parseInt(raw, 10) || 0;
+  const raw = input.value.replace(/\s/g, '');
+  if (hasOperator(raw)) {
+    return safeCalc(raw);
+  }
+  return parseInt(raw.replace(/[^0-9]/g, ''), 10) || 0;
 }
 
 // Format input value with thousand separators
 function formatInputDisplay(input) {
+  const raw = input.value.replace(/\s/g, '');
+  // Don't format while user is typing an expression
+  if (hasOperator(raw)) return;
+
   const pos = input.selectionStart;
   const oldLen = input.value.length;
-  const val = parseInputValue(input);
+  const val = parseInt(raw.replace(/[^0-9]/g, ''), 10) || 0;
 
   if (val === 0 && input.value === '') return;
 
@@ -69,55 +138,93 @@ function formatInputDisplay(input) {
   input.setSelectionRange(newPos, newPos);
 }
 
+// Resolve expression to formatted number (on blur/Enter)
+function resolveExpression(input) {
+  const raw = input.value.replace(/\s/g, '');
+  if (hasOperator(raw)) {
+    const result = safeCalc(raw);
+    input.value = result === 0 ? '' : formatNumber(result);
+  }
+}
+
 // ---- Calculator logic ----
-function calculate() {
-  const recruiters  = parseInputValue(inputs.recruiters) || 1;
-  const scoring     = parseInputValue(inputs.scoring);
-  const dialogs     = parseInputValue(inputs.dialogs);
-  const interviews  = parseInputValue(inputs.interviews);
-
-  const subscriptionCost = recruiters * SUBSCRIPTION_PRICE;
-  const scoringCost      = scoring * SCORING_PRICE;
-  const dialogsCost      = dialogs * DIALOG_PRICE;
-  const interviewsCost   = interviews * INTERVIEW_PRICE;
-  const operationsCost   = scoringCost + dialogsCost + interviewsCost;
+function calcPeriod(recruiters, scoringPerRec, dialogsPerRec, interviewsPerRec, months) {
+  const subscriptionCost = recruiters * SUBSCRIPTION_PRICE; // always annual
+  const monthlyOpsPerRec = scoringPerRec * SCORING_PRICE + dialogsPerRec * DIALOG_PRICE + interviewsPerRec * INTERVIEW_PRICE;
+  const operationsCost = monthlyOpsPerRec * recruiters * months;
   const totalBeforeBonus = subscriptionCost + operationsCost;
-
-  // Bonus (based on total budget, not just operations)
   const tier = BONUS_TIERS.find(t => totalBeforeBonus >= t.threshold);
-  const bonusRate   = tier ? tier.bonus : 0;
+  const bonusRate = tier ? tier.bonus : 0;
   const bonusAmount = Math.round(totalBeforeBonus * bonusRate);
-  const totalFinal  = totalBeforeBonus - bonusAmount;
+  const totalFinal = totalBeforeBonus - bonusAmount;
+  return { subscriptionCost, operationsCost, totalBeforeBonus, bonusRate, bonusAmount, totalFinal };
+}
 
-  // Update result cards
-  animateValue(resultEls.subscription, subscriptionCost, formatCurrency);
-  resultEls.subscriptionDetail.textContent = `${formatNumber(recruiters)} × ${formatNumber(SUBSCRIPTION_PRICE)} ₽`;
+function setCell(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = formatCurrency(value);
+}
 
-  animateValue(resultEls.operations, operationsCost, formatCurrency);
-  resultEls.operationsDetail.textContent =
-    `${formatNumber(scoringCost)} + ${formatNumber(dialogsCost)} + ${formatNumber(interviewsCost)} ₽`;
+function setBonusCell(id, bonusRate, bonusAmount) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (bonusRate > 0) {
+    const pct = (bonusRate * 100).toFixed(1).replace('.0', '');
+    el.textContent = `−${formatCurrency(bonusAmount)} (${pct}%)`;
+  } else {
+    el.textContent = '—';
+  }
+}
 
-  animateValue(resultEls.total, totalBeforeBonus, formatCurrency);
+function calculate() {
+  const recruiters    = parseInputValue(inputs.recruiters) || 1;
+  const scoringPerRec = parseInputValue(inputs.scoring);
+  const dialogsPerRec = parseInputValue(inputs.dialogs);
+  const interviewsPerRec = parseInputValue(inputs.interviews);
 
-  // Bonus bar — fill aligned with evenly-spaced tier markers
+  // Calculate all periods
+  const results = {};
+  PERIODS.forEach(p => {
+    results[p.months] = calcPeriod(recruiters, scoringPerRec, dialogsPerRec, interviewsPerRec, p.months);
+  });
+
+  // Update all three views
+  PERIODS.forEach(p => {
+    const m = p.months;
+    const r = results[m];
+    // Table
+    setCell(`t-sub-${m}`, r.subscriptionCost);
+    setCell(`t-ops-${m}`, r.operationsCost);
+    setCell(`t-total-${m}`, r.totalBeforeBonus);
+    setBonusCell(`t-bonus-${m}`, r.bonusRate, r.bonusAmount);
+    setCell(`t-final-${m}`, r.totalFinal);
+    // Cards
+    setCell(`c-sub-${m}`, r.subscriptionCost);
+    setCell(`c-ops-${m}`, r.operationsCost);
+    setBonusCell(`c-bonus-${m}`, r.bonusRate, r.bonusAmount);
+    setCell(`c-final-${m}`, r.totalFinal);
+  });
+
+  // Bonus bar — based on annual total
+  const annual = results[12];
+  const annualTotal = annual.totalBeforeBonus;
+
   const tierThresholds = [300_000, 500_000, 700_000, 1_500_000, 3_000_000];
   const tierCount = tierThresholds.length;
   let fillPercent = 0;
 
-  if (totalBeforeBonus >= tierThresholds[tierCount - 1]) {
+  if (annualTotal >= tierThresholds[tierCount - 1]) {
     fillPercent = 100;
-  } else if (totalBeforeBonus <= 0) {
+  } else if (annualTotal <= 0) {
     fillPercent = 0;
   } else {
-    // Find which segment we're in
     for (let i = 0; i < tierCount; i++) {
       const segStart = i === 0 ? 0 : tierThresholds[i - 1];
       const segEnd = tierThresholds[i];
       const posStart = i === 0 ? 0 : (i / tierCount) * 100;
       const posEnd = ((i + 1) / tierCount) * 100;
-
-      if (totalBeforeBonus < segEnd) {
-        const progress = (totalBeforeBonus - segStart) / (segEnd - segStart);
+      if (annualTotal < segEnd) {
+        const progress = (annualTotal - segStart) / (segEnd - segStart);
         fillPercent = posStart + progress * (posEnd - posStart);
         break;
       }
@@ -127,40 +234,36 @@ function calculate() {
   resultEls.bonusBarFill.style.width = fillPercent + '%';
 
   // Highlight active tiers
-  const tierEls = document.querySelectorAll('.bonus-tier');
-  tierEls.forEach(el => {
+  document.querySelectorAll('.bonus-tier').forEach(el => {
     const threshold = parseInt(el.dataset.threshold);
-    el.classList.toggle('active', totalBeforeBonus >= threshold);
+    el.classList.toggle('active', annualTotal >= threshold);
   });
 
-  // Bonus info text
-  if (bonusRate > 0) {
-    const bonusPercent = (bonusRate * 100).toFixed(1).replace('.0', '');
+  // Bonus info text (annual)
+  if (annual.bonusRate > 0) {
+    const bonusPercent = (annual.bonusRate * 100).toFixed(1).replace('.0', '');
     resultEls.bonusInfo.textContent =
-      `При бюджете ${formatCurrency(totalBeforeBonus)} вы получите бонус +${bonusPercent}% — это ${formatCurrency(bonusAmount)} дополнительно`;
+      `При годовом бюджете ${formatCurrency(annualTotal)} бонус +${bonusPercent}% — это ${formatCurrency(annual.bonusAmount)} дополнительно`;
     resultEls.bonusDetail.textContent =
-      `Из которых ${formatCurrency(bonusAmount)} — начисляется бонусом`;
+      `Из которых ${formatCurrency(annual.bonusAmount)} — начисляется бонусом`;
     resultEls.savingsDetail.textContent =
-      totalBeforeBonus > 0
-        ? `Экономия: ${bonusPercent}% от общего бюджета`
-        : '';
+      `Экономия: ${bonusPercent}% от годового бюджета`;
   } else {
-    // Find next tier
-    const nextTier = BONUS_TIERS.slice().reverse().find(t => totalBeforeBonus < t.threshold);
+    const nextTier = BONUS_TIERS.slice().reverse().find(t => annualTotal < t.threshold);
     if (nextTier) {
-      const diff = nextTier.threshold - totalBeforeBonus;
+      const diff = nextTier.threshold - annualTotal;
       const nextPercent = (nextTier.bonus * 100).toFixed(1).replace('.0', '');
       resultEls.bonusInfo.textContent =
         `До бонуса +${nextPercent}% не хватает ${formatCurrency(diff)}`;
     } else {
       resultEls.bonusInfo.textContent = '';
     }
-    resultEls.bonusDetail.textContent = 'Бонус не применён — общий бюджет ниже 300 000 ₽';
+    resultEls.bonusDetail.textContent = 'Бонус не применён — годовой бюджет ниже 300 000 ₽';
     resultEls.savingsDetail.textContent = '';
   }
 
-  // Total final
-  animateValue(resultEls.totalFinal, totalFinal, formatCurrency);
+  // Animate annual total final
+  animateValue(resultEls.totalFinal, annual.totalFinal, formatCurrency);
 }
 
 // ---- Animated number counter ----
@@ -205,20 +308,31 @@ Object.values(inputs).forEach(input => {
   });
 
   input.addEventListener('blur', () => {
+    resolveExpression(input);
     if (input.value === '') {
       input.value = input.id === 'recruiters_count' ? '1' : '0';
     }
     formatInputDisplay(input);
   });
 
-  // Prevent non-numeric input
+  // Enter resolves expression
   input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      resolveExpression(input);
+      if (input.value === '') {
+        input.value = input.id === 'recruiters_count' ? '1' : '0';
+      }
+      formatInputDisplay(input);
+      calculate();
+      return;
+    }
     const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
     if (allowed.includes(e.key)) return;
     if (e.ctrlKey || e.metaKey) return;
-    if (!/^\d$/.test(e.key)) {
-      e.preventDefault();
-    }
+    // Allow digits, math operators and parentheses
+    if (/^[\d*/+\-()]$/.test(e.key)) return;
+    e.preventDefault();
   });
 });
 
@@ -325,9 +439,7 @@ if (leadForm) {
     const dialogs     = parseInputValue(inputs.dialogs);
     const interviews  = parseInputValue(inputs.interviews);
 
-    const subscriptionCost = recruiters * SUBSCRIPTION_PRICE;
-    const operationsCost   = scoring * SCORING_PRICE + dialogs * DIALOG_PRICE + interviews * INTERVIEW_PRICE;
-    const total = subscriptionCost + operationsCost;
+    const annual = calcPeriod(recruiters, scoring, dialogs, interviews, 12);
 
     const payload = {
       name,
@@ -338,10 +450,10 @@ if (leadForm) {
       comment,
       calculator: {
         recruiters,
-        scoring,
-        dialogs,
-        interviews,
-        total,
+        scoringPerMonth: scoring,
+        dialogsPerMonth: dialogs,
+        interviewsPerMonth: interviews,
+        annualTotal: annual.totalFinal,
       },
     };
 
@@ -431,6 +543,18 @@ document.querySelectorAll('.donut-segment[data-tooltip]').forEach(seg => {
 
   seg.addEventListener('mouseleave', () => {
     donutTooltip.classList.remove('visible');
+  });
+});
+
+// ---- Results view toggle ----
+document.querySelectorAll('.results-toggle__btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const view = btn.dataset.resultsView;
+    document.querySelectorAll('.results-toggle__btn').forEach(b => b.classList.remove('results-toggle__btn--active'));
+    btn.classList.add('results-toggle__btn--active');
+    document.querySelectorAll('.results-view').forEach(v => v.classList.remove('results-view--active'));
+    const target = document.querySelector(`.results-view[data-results-view="${view}"]`);
+    if (target) target.classList.add('results-view--active');
   });
 });
 
