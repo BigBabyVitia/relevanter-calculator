@@ -454,6 +454,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: baseline;
+  gap: 12px;
 }
 
 .total-bonus-card__row--sub {
