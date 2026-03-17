@@ -92,6 +92,41 @@
             </div>
           </div>
 
+          <!-- First payment summary -->
+          <div class="first-payment-summary">
+            <h3 class="first-payment-summary__title">Ваш первый платёж</h3>
+            <div class="first-payment-grid">
+              <div class="first-payment-item">
+                <span class="first-payment-item__period">Месяц</span>
+                <span class="first-payment-item__value" id="fp-1">—</span>
+                <span class="first-payment-item__detail">подписка + операции<br>за 1 мес.</span>
+                <span class="first-payment-item__balance" id="fp-balance-1"></span>
+              </div>
+              <div class="first-payment-item">
+                <span class="first-payment-item__period">Квартал</span>
+                <span class="first-payment-item__value" id="fp-3">—</span>
+                <span class="first-payment-item__detail">подписка + операции<br>за 3 мес.</span>
+                <span class="first-payment-item__balance" id="fp-balance-3"></span>
+              </div>
+              <div class="first-payment-item">
+                <span class="first-payment-item__period">Полугодие</span>
+                <span class="first-payment-item__value" id="fp-6">—</span>
+                <span class="first-payment-item__detail">подписка + операции<br>за 6 мес.</span>
+                <span class="first-payment-item__balance" id="fp-balance-6"></span>
+              </div>
+              <div class="first-payment-item">
+                <span class="first-payment-item__period">Год</span>
+                <span class="first-payment-item__value" id="fp-12">—</span>
+                <span class="first-payment-item__detail">подписка + операции<br>за 12 мес.</span>
+                <span class="first-payment-item__balance" id="fp-balance-12"></span>
+              </div>
+            </div>
+            <p class="first-payment-summary__note">Далее оплата только за операции. Можно пополнить баланс в любой момент</p>
+          </div>
+
+          <!-- Table heading -->
+          <h3 class="calc-section__subtitle">Расчёт по операциям</h3>
+
           <!-- Table -->
           <div class="results-table-wrap">
             <table class="results-table">
@@ -141,7 +176,7 @@
                   <td id="t-bonus-12">—</td>
                 </tr>
                 <tr class="results-table__row--ops-total">
-                  <td>Итого за операции</td>
+                  <td id="ops-total-label">Итого за операции</td>
                   <td id="t-ops-total-1">—</td>
                   <td id="t-ops-total-3">—</td>
                   <td id="t-ops-total-6">—</td>
@@ -149,34 +184,6 @@
                 </tr>
               </tbody>
             </table>
-          </div>
-
-          <!-- First payment summary -->
-          <div class="first-payment-summary">
-            <h3 class="first-payment-summary__title">Ваш первый платёж</h3>
-            <div class="first-payment-grid">
-              <div class="first-payment-item">
-                <span class="first-payment-item__period">Месяц</span>
-                <span class="first-payment-item__value" id="fp-1">—</span>
-                <span class="first-payment-item__detail">подписка + операции за 1 мес.</span>
-              </div>
-              <div class="first-payment-item">
-                <span class="first-payment-item__period">Квартал</span>
-                <span class="first-payment-item__value" id="fp-3">—</span>
-                <span class="first-payment-item__detail">подписка + операции за 3 мес.</span>
-              </div>
-              <div class="first-payment-item">
-                <span class="first-payment-item__period">Полугодие</span>
-                <span class="first-payment-item__value" id="fp-6">—</span>
-                <span class="first-payment-item__detail">подписка + операции за 6 мес.</span>
-              </div>
-              <div class="first-payment-item">
-                <span class="first-payment-item__period">Год</span>
-                <span class="first-payment-item__value" id="fp-12">—</span>
-                <span class="first-payment-item__detail">подписка + операции за 12 мес.</span>
-              </div>
-            </div>
-            <p class="first-payment-summary__note">Далее оплата только за операции. Можно пополнить баланс в любой момент</p>
           </div>
 
           <!-- Bonus scale -->
@@ -217,19 +224,6 @@
             <p class="bonus-section__info" id="bonus-info">До бонуса +1.5% не хватает 300 000 ₽</p>
           </div>
 
-          <!-- Total with bonus (annual) -->
-          <div class="total-bonus-card" id="total-bonus-card">
-            <div class="total-bonus-card__row">
-              <span class="total-bonus-card__label">Годовой итог</span>
-              <span class="total-bonus-card__value" id="total-final">12 000 ₽</span>
-            </div>
-            <div class="total-bonus-card__row total-bonus-card__row--sub">
-              <span id="bonus-detail">Бонус не применён — бюджет ниже 300 000 ₽</span>
-            </div>
-            <div class="total-bonus-card__row total-bonus-card__row--sub">
-              <span id="savings-detail"></span>
-            </div>
-          </div>
         </div>
 
       </div>

@@ -31,13 +31,13 @@ const inputs = {
   interviews: document.getElementById('interviews_count'),
 };
 
+const bonusMode = 'balance';
+
 const resultEls = {
   bonusBarFill:       document.getElementById('bonus-bar-fill'),
   bonusInfo:          document.getElementById('bonus-info'),
-  totalFinal:         document.getElementById('total-final'),
-  bonusDetail:        document.getElementById('bonus-detail'),
-  savingsDetail:      document.getElementById('savings-detail'),
   subFormula:         document.getElementById('sub-formula'),
+  opsLabel:           document.getElementById('ops-total-label'),
 };
 
 function pluralRecruiters(n) {
@@ -187,9 +187,16 @@ function setBonusCell(id, bonusRate, bonusAmount) {
   if (!el) return;
   if (bonusRate > 0) {
     const pct = (bonusRate * 100).toFixed(1).replace('.0', '');
-    el.textContent = `−${formatCurrency(bonusAmount)} (${pct}%)`;
+    if (bonusMode === 'balance') {
+      el.textContent = `+${formatCurrency(bonusAmount)} (${pct}%)`;
+      el.classList.add('bonus-positive');
+    } else {
+      el.textContent = `−${formatCurrency(bonusAmount)} (${pct}%)`;
+      el.classList.remove('bonus-positive');
+    }
   } else {
     el.textContent = '—';
+    el.classList.remove('bonus-positive');
   }
 }
 
@@ -222,10 +229,27 @@ function calculate() {
     setCell(`t-interviews-${m}`, r.interviewsCost);
     setCell(`t-ops-${m}`, r.operationsCost);
     setBonusCell(`t-bonus-${m}`, r.bonusRate, opsBonusShare);
-    setCell(`t-ops-total-${m}`, r.opsAfterBonus);
-    // First payment summary
-    setCell(`fp-${m}`, r.firstPayment);
+    const fpBalanceEl = document.getElementById(`fp-balance-${m}`);
+    if (bonusMode === 'balance') {
+      setCell(`t-ops-total-${m}`, r.operationsCost + opsBonusShare);
+      setCell(`fp-${m}`, r.subscriptionCost + r.operationsCost);
+      if (fpBalanceEl) {
+        if (opsBonusShare > 0) {
+          fpBalanceEl.textContent = `на балансе ${formatCurrency(r.subscriptionCost + r.operationsCost + opsBonusShare)}`;
+          fpBalanceEl.classList.add('visible');
+        } else {
+          fpBalanceEl.classList.remove('visible');
+        }
+      }
+    } else {
+      setCell(`t-ops-total-${m}`, r.opsAfterBonus);
+      setCell(`fp-${m}`, r.firstPayment);
+      if (fpBalanceEl) fpBalanceEl.classList.remove('visible');
+    }
   });
+
+  // Update labels based on bonus mode
+  resultEls.opsLabel.textContent = bonusMode === 'balance' ? 'На балансе' : 'Итого за операции';
 
   // Bonus bar — based on annual total
   const annual = results[12];
@@ -264,12 +288,13 @@ function calculate() {
   // Bonus info text (annual)
   if (annual.bonusRate > 0) {
     const bonusPercent = (annual.bonusRate * 100).toFixed(1).replace('.0', '');
-    resultEls.bonusInfo.textContent =
-      `При годовом бюджете ${formatCurrency(annualTotal)} бонус +${bonusPercent}% — это ${formatCurrency(annual.bonusAmount)} дополнительно`;
-    resultEls.bonusDetail.textContent =
-      `Из которых ${formatCurrency(annual.bonusAmount)} — начисляется бонусом`;
-    resultEls.savingsDetail.textContent =
-      `Экономия: ${bonusPercent}% от годового бюджета`;
+    if (bonusMode === 'balance') {
+      resultEls.bonusInfo.textContent =
+        `При годовом бюджете ${formatCurrency(annualTotal)} бонус +${bonusPercent}% — ${formatCurrency(annual.bonusAmount)} будет начислено на баланс`;
+    } else {
+      resultEls.bonusInfo.textContent =
+        `При годовом бюджете ${formatCurrency(annualTotal)} бонус +${bonusPercent}% — это ${formatCurrency(annual.bonusAmount)} дополнительно`;
+    }
   } else {
     const nextTier = BONUS_TIERS.slice().reverse().find(t => annualTotal < t.threshold);
     if (nextTier) {
@@ -280,42 +305,7 @@ function calculate() {
     } else {
       resultEls.bonusInfo.textContent = '';
     }
-    resultEls.bonusDetail.textContent = 'Бонус не применён — годовой бюджет ниже 300 000 ₽';
-    resultEls.savingsDetail.textContent = '';
   }
-
-  // Animate annual total final
-  animateValue(resultEls.totalFinal, annual.totalFinal, formatCurrency);
-}
-
-// ---- Animated number counter ----
-const animationTimers = new WeakMap();
-
-function animateValue(el, targetValue, formatter) {
-  // Cancel previous animation
-  if (animationTimers.has(el)) {
-    cancelAnimationFrame(animationTimers.get(el));
-  }
-
-  const currentText = el.textContent.replace(/[^\d]/g, '');
-  const startValue = parseInt(currentText) || 0;
-  const duration = 300;
-  const startTime = performance.now();
-
-  function step(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    // Ease out
-    const eased = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(startValue + (targetValue - startValue) * eased);
-    el.textContent = formatter(current);
-
-    if (progress < 1) {
-      animationTimers.set(el, requestAnimationFrame(step));
-    }
-  }
-
-  animationTimers.set(el, requestAnimationFrame(step));
 }
 
 // ---- Input event handlers ----
