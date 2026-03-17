@@ -225,6 +225,14 @@ body {
   margin-bottom: 8px;
 }
 
+.calc-row-note {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  margin-top: 24px;
+}
+
 .calc-formula-hint {
   font-size: 12px;
   color: var(--text-muted);
@@ -314,44 +322,53 @@ body {
   padding-top: 32px;
 }
 
-/* Results toggle */
-.results-toggle {
+/* Subscription banner */
+.subscription-banner {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.subscription-banner__content {
   display: flex;
-  gap: 4px;
-  background: var(--surface-2);
-  border-radius: 10px;
-  padding: 4px;
-  margin-bottom: 24px;
-  width: fit-content;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.results-toggle__btn {
-  font-family: var(--font-body);
-  font-size: 13px;
+.subscription-banner__main {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.subscription-banner__label {
+  font-family: var(--font-heading);
+  font-size: 14px;
   font-weight: 600;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.results-toggle__btn--active {
-  background: var(--surface);
   color: var(--text-primary);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
-/* View switching */
-.results-view { display: none; margin-bottom: 32px; }
-.results-view--active { display: block; }
+.subscription-banner__formula {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.subscription-banner__note {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
 
 /* Table view */
 .results-table-wrap {
   overflow-x: auto;
   border-radius: 12px;
+  margin-bottom: 32px;
 }
 
 .results-table {
@@ -403,79 +420,78 @@ body {
   font-weight: 400 !important;
 }
 
-.results-table__row--final td {
+.results-table__row--detail td {
+  font-size: 13px !important;
+  color: var(--text-muted) !important;
+  font-weight: 400 !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+.results-table__row--ops-total td {
   border-top: 1px solid var(--border);
-  font-weight: 700 !important;
-  color: var(--accent) !important;
-  font-size: 16px !important;
-}
-
-.results-table__row--final td:first-child {
+  font-weight: 600 !important;
   color: var(--text-primary) !important;
-  font-family: var(--font-heading);
-  font-weight: 700 !important;
 }
 
-/* Cards view */
-.period-cards {
+/* First payment summary */
+.first-payment-summary {
+  background: var(--bg);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.first-payment-summary__title {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.first-payment-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
 
-.period-card {
-  background: var(--bg);
-  border-radius: 16px;
-  padding: 20px;
+.first-payment-item {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
 }
 
-.period-card__title {
-  font-family: var(--font-heading);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--accent);
-  margin-bottom: 4px;
-}
-
-.period-card__line {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
+.first-payment-item__period {
+  font-size: 12px;
   color: var(--text-secondary);
-}
-
-.period-card__line span:last-child {
-  font-family: var(--font-heading);
   font-weight: 500;
-  color: var(--text-primary);
 }
 
-.period-card__line--muted span:last-child {
-  color: var(--text-muted);
-  font-weight: 400;
-}
-
-.period-card__total {
-  display: flex;
-  justify-content: space-between;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.period-card__total span:first-child {
+.first-payment-item__value {
   font-family: var(--font-heading);
-  color: var(--text-primary);
-}
-
-.period-card__total span:last-child {
-  font-family: var(--font-heading);
+  font-size: 20px;
   font-weight: 700;
   color: var(--accent);
+}
+
+.first-payment-item__detail {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.first-payment-summary__note {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
 }
 
 /* Bonus note */
@@ -1133,8 +1149,13 @@ body {
     grid-template-columns: 1fr 1fr;
   }
 
-  .period-cards {
+  .first-payment-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .subscription-banner__content {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .metrics-grid {
@@ -1198,8 +1219,18 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .period-cards {
-    grid-template-columns: 1fr;
+  .first-payment-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .first-payment-item__value {
+    font-size: 16px;
+  }
+
+  .subscription-banner__main {
+    flex-direction: column;
+    gap: 4px;
   }
 
   .results-table {

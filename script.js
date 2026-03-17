@@ -37,7 +37,16 @@ const resultEls = {
   totalFinal:         document.getElementById('total-final'),
   bonusDetail:        document.getElementById('bonus-detail'),
   savingsDetail:      document.getElementById('savings-detail'),
+  subFormula:         document.getElementById('sub-formula'),
 };
+
+function pluralRecruiters(n) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'рекрутер';
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'рекрутера';
+  return 'рекрутеров';
+}
 
 // ---- Number formatting ----
 function formatNumber(n) {
@@ -150,6 +159,9 @@ function resolveExpression(input) {
 // ---- Calculator logic ----
 function calcPeriod(recruiters, scoringPerRec, dialogsPerRec, interviewsPerRec, months) {
   const subscriptionCost = recruiters * SUBSCRIPTION_PRICE; // always annual
+  const scoringCost = scoringPerRec * SCORING_PRICE * recruiters * months;
+  const dialogsCost = dialogsPerRec * DIALOG_PRICE * recruiters * months;
+  const interviewsCost = interviewsPerRec * INTERVIEW_PRICE * recruiters * months;
   const monthlyOpsPerRec = scoringPerRec * SCORING_PRICE + dialogsPerRec * DIALOG_PRICE + interviewsPerRec * INTERVIEW_PRICE;
   const operationsCost = monthlyOpsPerRec * recruiters * months;
   const totalBeforeBonus = subscriptionCost + operationsCost;
@@ -157,7 +169,12 @@ function calcPeriod(recruiters, scoringPerRec, dialogsPerRec, interviewsPerRec, 
   const bonusRate = tier ? tier.bonus : 0;
   const bonusAmount = Math.round(totalBeforeBonus * bonusRate);
   const totalFinal = totalBeforeBonus - bonusAmount;
-  return { subscriptionCost, operationsCost, totalBeforeBonus, bonusRate, bonusAmount, totalFinal };
+  // Operations after proportional bonus share
+  const opsBonusShare = operationsCost > 0 && totalBeforeBonus > 0
+    ? Math.round(bonusAmount * (operationsCost / totalBeforeBonus)) : 0;
+  const opsAfterBonus = operationsCost - opsBonusShare;
+  const firstPayment = subscriptionCost - (bonusAmount - opsBonusShare) + opsAfterBonus;
+  return { subscriptionCost, scoringCost, dialogsCost, interviewsCost, operationsCost, totalBeforeBonus, bonusRate, bonusAmount, totalFinal, opsAfterBonus, firstPayment };
 }
 
 function setCell(id, value) {
@@ -188,21 +205,26 @@ function calculate() {
     results[p.months] = calcPeriod(recruiters, scoringPerRec, dialogsPerRec, interviewsPerRec, p.months);
   });
 
-  // Update all three views
+  // Update subscription banner
+  const subscriptionTotal = recruiters * SUBSCRIPTION_PRICE;
+  resultEls.subFormula.textContent =
+    `${formatCurrency(SUBSCRIPTION_PRICE)} × ${recruiters} ${pluralRecruiters(recruiters)} = ${formatCurrency(subscriptionTotal)}`;
+
+  // Update all views
   PERIODS.forEach(p => {
     const m = p.months;
     const r = results[m];
-    // Table
-    setCell(`t-sub-${m}`, r.subscriptionCost);
+    const opsBonusShare = r.operationsCost > 0 && r.totalBeforeBonus > 0
+      ? Math.round(r.bonusAmount * (r.operationsCost / r.totalBeforeBonus)) : 0;
+    // Table — breakdown + operations
+    setCell(`t-scoring-${m}`, r.scoringCost);
+    setCell(`t-dialogs-${m}`, r.dialogsCost);
+    setCell(`t-interviews-${m}`, r.interviewsCost);
     setCell(`t-ops-${m}`, r.operationsCost);
-    setCell(`t-total-${m}`, r.totalBeforeBonus);
-    setBonusCell(`t-bonus-${m}`, r.bonusRate, r.bonusAmount);
-    setCell(`t-final-${m}`, r.totalFinal);
-    // Cards
-    setCell(`c-sub-${m}`, r.subscriptionCost);
-    setCell(`c-ops-${m}`, r.operationsCost);
-    setBonusCell(`c-bonus-${m}`, r.bonusRate, r.bonusAmount);
-    setCell(`c-final-${m}`, r.totalFinal);
+    setBonusCell(`t-bonus-${m}`, r.bonusRate, opsBonusShare);
+    setCell(`t-ops-total-${m}`, r.opsAfterBonus);
+    // First payment summary
+    setCell(`fp-${m}`, r.firstPayment);
   });
 
   // Bonus bar — based on annual total
@@ -336,21 +358,6 @@ Object.values(inputs).forEach(input => {
   });
 });
 
-// ---- Pareto chart animation (Intersection Observer) ----
-const paretoCharts = document.getElementById('pareto-charts');
-
-if (paretoCharts) {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        paretoCharts.classList.add('animated');
-        observer.unobserve(paretoCharts);
-      }
-    });
-  }, { threshold: 0.3 });
-
-  observer.observe(paretoCharts);
-}
 
 // ---- Lead form ----
 const leadForm = document.getElementById('lead-form');
@@ -525,60 +532,6 @@ function loadAdminSettings() {
   }
 }
 
-// ---- Donut tooltip ----
-const donutTooltip = document.createElement('div');
-donutTooltip.className = 'donut-tooltip';
-document.body.appendChild(donutTooltip);
-
-document.querySelectorAll('.donut-segment[data-tooltip]').forEach(seg => {
-  seg.addEventListener('mouseenter', (e) => {
-    donutTooltip.textContent = seg.getAttribute('data-tooltip');
-    donutTooltip.classList.add('visible');
-  });
-
-  seg.addEventListener('mousemove', (e) => {
-    donutTooltip.style.left = e.clientX + 'px';
-    donutTooltip.style.top = e.clientY + 'px';
-  });
-
-  seg.addEventListener('mouseleave', () => {
-    donutTooltip.classList.remove('visible');
-  });
-});
-
-// ---- Results view toggle ----
-document.querySelectorAll('.results-toggle__btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const view = btn.dataset.resultsView;
-    document.querySelectorAll('.results-toggle__btn').forEach(b => b.classList.remove('results-toggle__btn--active'));
-    btn.classList.add('results-toggle__btn--active');
-    document.querySelectorAll('.results-view').forEach(v => v.classList.remove('results-view--active'));
-    const target = document.querySelector(`.results-view[data-results-view="${view}"]`);
-    if (target) target.classList.add('results-view--active');
-  });
-});
-
-// ---- Pareto toggle ----
-document.querySelectorAll('.pareto-toggle__btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const view = btn.dataset.view;
-
-    // Toggle buttons
-    document.querySelectorAll('.pareto-toggle__btn').forEach(b => b.classList.remove('pareto-toggle__btn--active'));
-    btn.classList.add('pareto-toggle__btn--active');
-
-    // Toggle views
-    document.querySelectorAll('.pareto-view').forEach(v => v.classList.remove('pareto-view--active'));
-    const target = document.querySelector(`.pareto-view[data-view="${view}"]`);
-    if (target) {
-      target.classList.add('pareto-view--active');
-      // Trigger animation for donut view
-      if (view === 'donut') {
-        target.classList.add('animated');
-      }
-    }
-  });
-});
 
 // ---- Init ----
 calculate();

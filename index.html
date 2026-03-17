@@ -48,7 +48,7 @@
           <div class="calc-row calc-row--2">
             <div class="input-group">
               <label class="input-group__label" for="recruiters_count">Количество рекрутеров</label>
-              <span class="input-group__hint">12 000 ₽ / аккаунт / год</span>
+              <span class="input-group__hint">12 000 ₽ / рекрутер / год (разовая подписка)</span>
               <input type="text" inputmode="numeric" id="recruiters_count" class="input-group__input" placeholder="1" value="1">
             </div>
             <div class="input-group">
@@ -56,20 +56,21 @@
             </div>
           </div>
 
+          <h2 class="calc-section__title">Количество операций на 1 рекрутера в месяц</h2>
           <div class="calc-row calc-row--3">
             <div class="input-group">
               <label class="input-group__label" for="scoring_count">Оценка резюме</label>
-              <span class="input-group__hint">1 ₽ / шт · на рекрутера в месяц</span>
+              <span class="input-group__hint">1 ₽ за штуку</span>
               <input type="text" inputmode="numeric" id="scoring_count" class="input-group__input" placeholder="0" value="0">
             </div>
             <div class="input-group">
               <label class="input-group__label" for="dialogs_count">AI-диалоги</label>
-              <span class="input-group__hint">20 ₽ / шт · на рекрутера в месяц</span>
+              <span class="input-group__hint">20 ₽ за штуку</span>
               <input type="text" inputmode="numeric" id="dialogs_count" class="input-group__input" placeholder="0" value="0">
             </div>
             <div class="input-group">
               <label class="input-group__label" for="interviews_count">AI-интервью</label>
-              <span class="input-group__hint">80 ₽ / шт · на рекрутера в месяц</span>
+              <span class="input-group__hint">80 ₽ за штуку</span>
               <input type="text" inputmode="numeric" id="interviews_count" class="input-group__input" placeholder="0" value="0">
             </div>
           </div>
@@ -80,98 +81,102 @@
         <div class="calc-section calc-results" id="calc-results">
           <h2 class="calc-section__title">Результат расчёта</h2>
 
-          <!-- View toggle -->
-          <div class="results-toggle">
-            <button class="results-toggle__btn results-toggle__btn--active" data-results-view="table">Таблица</button>
-            <button class="results-toggle__btn" data-results-view="cards">Карточки</button>
-          </div>
-
-          <!-- Table view -->
-          <div class="results-view results-view--active" data-results-view="table">
-            <div class="results-table-wrap">
-              <table class="results-table">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>Месяц</th>
-                    <th>Квартал</th>
-                    <th>Полугодие</th>
-                    <th>Год</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Подписка</td>
-                    <td id="t-sub-1">—</td>
-                    <td id="t-sub-3">—</td>
-                    <td id="t-sub-6">—</td>
-                    <td id="t-sub-12">—</td>
-                  </tr>
-                  <tr>
-                    <td>Операции</td>
-                    <td id="t-ops-1">—</td>
-                    <td id="t-ops-3">—</td>
-                    <td id="t-ops-6">—</td>
-                    <td id="t-ops-12">—</td>
-                  </tr>
-                  <tr class="results-table__row--total">
-                    <td>Итого</td>
-                    <td id="t-total-1">—</td>
-                    <td id="t-total-3">—</td>
-                    <td id="t-total-6">—</td>
-                    <td id="t-total-12">—</td>
-                  </tr>
-                  <tr class="results-table__row--bonus">
-                    <td>Бонус</td>
-                    <td id="t-bonus-1">—</td>
-                    <td id="t-bonus-3">—</td>
-                    <td id="t-bonus-6">—</td>
-                    <td id="t-bonus-12">—</td>
-                  </tr>
-                  <tr class="results-table__row--final">
-                    <td>К оплате</td>
-                    <td id="t-final-1">—</td>
-                    <td id="t-final-3">—</td>
-                    <td id="t-final-6">—</td>
-                    <td id="t-final-12">—</td>
-                  </tr>
-                </tbody>
-              </table>
+          <!-- Subscription banner -->
+          <div class="subscription-banner">
+            <div class="subscription-banner__content">
+              <div class="subscription-banner__main">
+                <span class="subscription-banner__label">Годовая подписка</span>
+                <span class="subscription-banner__formula" id="sub-formula">12 000 ₽ × 1 рекрутер = 12 000 ₽</span>
+              </div>
+              <span class="subscription-banner__note">Оплачивается один раз в год</span>
             </div>
           </div>
 
-          <!-- Cards view -->
-          <div class="results-view" data-results-view="cards">
-            <div class="period-cards">
-              <div class="period-card" data-months="1">
-                <span class="period-card__title">Месяц</span>
-                <div class="period-card__line"><span>Подписка</span><span id="c-sub-1">—</span></div>
-                <div class="period-card__line"><span>Операции</span><span id="c-ops-1">—</span></div>
-                <div class="period-card__line period-card__line--muted"><span>Бонус</span><span id="c-bonus-1">—</span></div>
-                <div class="period-card__total"><span>К оплате</span><span id="c-final-1">—</span></div>
+          <!-- Table -->
+          <div class="results-table-wrap">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Месяц</th>
+                  <th>Квартал</th>
+                  <th>Полугодие</th>
+                  <th>Год</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="results-table__row--detail">
+                  <td>Оценка резюме</td>
+                  <td id="t-scoring-1">—</td>
+                  <td id="t-scoring-3">—</td>
+                  <td id="t-scoring-6">—</td>
+                  <td id="t-scoring-12">—</td>
+                </tr>
+                <tr class="results-table__row--detail">
+                  <td>AI-диалоги</td>
+                  <td id="t-dialogs-1">—</td>
+                  <td id="t-dialogs-3">—</td>
+                  <td id="t-dialogs-6">—</td>
+                  <td id="t-dialogs-12">—</td>
+                </tr>
+                <tr class="results-table__row--detail">
+                  <td>AI-интервью</td>
+                  <td id="t-interviews-1">—</td>
+                  <td id="t-interviews-3">—</td>
+                  <td id="t-interviews-6">—</td>
+                  <td id="t-interviews-12">—</td>
+                </tr>
+                <tr>
+                  <td>Операции</td>
+                  <td id="t-ops-1">—</td>
+                  <td id="t-ops-3">—</td>
+                  <td id="t-ops-6">—</td>
+                  <td id="t-ops-12">—</td>
+                </tr>
+                <tr class="results-table__row--bonus">
+                  <td>Бонус</td>
+                  <td id="t-bonus-1">—</td>
+                  <td id="t-bonus-3">—</td>
+                  <td id="t-bonus-6">—</td>
+                  <td id="t-bonus-12">—</td>
+                </tr>
+                <tr class="results-table__row--ops-total">
+                  <td>Итого за операции</td>
+                  <td id="t-ops-total-1">—</td>
+                  <td id="t-ops-total-3">—</td>
+                  <td id="t-ops-total-6">—</td>
+                  <td id="t-ops-total-12">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- First payment summary -->
+          <div class="first-payment-summary">
+            <h3 class="first-payment-summary__title">Ваш первый платёж</h3>
+            <div class="first-payment-grid">
+              <div class="first-payment-item">
+                <span class="first-payment-item__period">Месяц</span>
+                <span class="first-payment-item__value" id="fp-1">—</span>
+                <span class="first-payment-item__detail">подписка + операции за 1 мес.</span>
               </div>
-              <div class="period-card" data-months="3">
-                <span class="period-card__title">Квартал</span>
-                <div class="period-card__line"><span>Подписка</span><span id="c-sub-3">—</span></div>
-                <div class="period-card__line"><span>Операции</span><span id="c-ops-3">—</span></div>
-                <div class="period-card__line period-card__line--muted"><span>Бонус</span><span id="c-bonus-3">—</span></div>
-                <div class="period-card__total"><span>К оплате</span><span id="c-final-3">—</span></div>
+              <div class="first-payment-item">
+                <span class="first-payment-item__period">Квартал</span>
+                <span class="first-payment-item__value" id="fp-3">—</span>
+                <span class="first-payment-item__detail">подписка + операции за 3 мес.</span>
               </div>
-              <div class="period-card" data-months="6">
-                <span class="period-card__title">Полугодие</span>
-                <div class="period-card__line"><span>Подписка</span><span id="c-sub-6">—</span></div>
-                <div class="period-card__line"><span>Операции</span><span id="c-ops-6">—</span></div>
-                <div class="period-card__line period-card__line--muted"><span>Бонус</span><span id="c-bonus-6">—</span></div>
-                <div class="period-card__total"><span>К оплате</span><span id="c-final-6">—</span></div>
+              <div class="first-payment-item">
+                <span class="first-payment-item__period">Полугодие</span>
+                <span class="first-payment-item__value" id="fp-6">—</span>
+                <span class="first-payment-item__detail">подписка + операции за 6 мес.</span>
               </div>
-              <div class="period-card" data-months="12">
-                <span class="period-card__title">Год</span>
-                <div class="period-card__line"><span>Подписка</span><span id="c-sub-12">—</span></div>
-                <div class="period-card__line"><span>Операции</span><span id="c-ops-12">—</span></div>
-                <div class="period-card__line period-card__line--muted"><span>Бонус</span><span id="c-bonus-12">—</span></div>
-                <div class="period-card__total"><span>К оплате</span><span id="c-final-12">—</span></div>
+              <div class="first-payment-item">
+                <span class="first-payment-item__period">Год</span>
+                <span class="first-payment-item__value" id="fp-12">—</span>
+                <span class="first-payment-item__detail">подписка + операции за 12 мес.</span>
               </div>
             </div>
+            <p class="first-payment-summary__note">Далее оплата только за операции. Можно пополнить баланс в любой момент</p>
           </div>
 
           <!-- Bonus scale -->
@@ -331,148 +336,8 @@
       <p class="section-subtitle">Как Relevanter меняет структуру работы рекрутера</p>
       <p class="pareto-explanation">Правило Парето (принцип 80/20) — 20% усилий дают 80% результата. В классическом рекрутинге 80% времени уходит на рутинный поиск, а не на живое общение. Relevanter переворачивает это соотношение.</p>
 
-      <div class="pareto-toggle">
-        <button class="pareto-toggle__btn pareto-toggle__btn--active" data-view="donut">Кольца</button>
-        <button class="pareto-toggle__btn" data-view="filled">С процентами</button>
-        <button class="pareto-toggle__btn" data-view="diagram">Диаграмма</button>
-      </div>
-
-      <!-- View 1: Donut rings -->
-      <div class="pareto-charts pareto-view pareto-view--active" id="pareto-charts" data-view="donut">
-        <!-- Before -->
-        <div class="pareto-chart">
-          <div class="pareto-chart__donut">
-            <svg viewBox="0 0 200 200" class="donut-svg">
-              <circle cx="100" cy="100" r="80" fill="none" stroke="#E8E2DC" stroke-width="30"/>
-              <circle cx="100" cy="100" r="80" fill="none" stroke="#4CAF82" stroke-width="30"
-                stroke-dasharray="100.53 502.65" stroke-dashoffset="0"
-                class="donut-segment donut-segment--green-before" transform="rotate(-90 100 100)"
-                data-tooltip="Общение и отбор — 20%"/>
-              <circle cx="100" cy="100" r="80" fill="none" stroke="#E16349" stroke-width="30"
-                stroke-dasharray="402.12 502.65" stroke-dashoffset="-100.53"
-                class="donut-segment donut-segment--orange-before" transform="rotate(-90 100 100)"
-                data-tooltip="Поиск кандидатов — 80%"/>
-            </svg>
-            <div class="pareto-chart__center">Раньше</div>
-          </div>
-          <div class="pareto-chart__legend">
-            <div class="legend-item">
-              <span class="legend-dot" style="background:#E16349"></span>
-              <span>80% — Поиск кандидатов</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-dot" style="background:#4CAF82"></span>
-              <span>20% — Общение и отбор</span>
-            </div>
-          </div>
-          <p class="pareto-chart__caption pareto-chart__caption--muted">Большая трата времени на поиск</p>
-        </div>
-
-        <!-- Arrow -->
-        <div class="pareto-arrow">
-          <svg width="60" height="24" viewBox="0 0 60 24" fill="none">
-            <path d="M0 12H54M54 12L44 2M54 12L44 22" stroke="#E16349" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span class="pareto-arrow__text">Эффект Relevanter</span>
-        </div>
-
-        <!-- After -->
-        <div class="pareto-chart">
-          <div class="pareto-chart__donut">
-            <svg viewBox="0 0 200 200" class="donut-svg">
-              <circle cx="100" cy="100" r="80" fill="none" stroke="#E8E2DC" stroke-width="30"/>
-              <circle cx="100" cy="100" r="80" fill="none" stroke="#4CAF82" stroke-width="30"
-                stroke-dasharray="402.12 502.65" stroke-dashoffset="0"
-                class="donut-segment donut-segment--green-after" transform="rotate(-90 100 100)"
-                data-tooltip="Общение и отбор — 80%"/>
-              <circle cx="100" cy="100" r="80" fill="none" stroke="#E16349" stroke-width="30"
-                stroke-dasharray="100.53 502.65" stroke-dashoffset="-402.12"
-                class="donut-segment donut-segment--orange-after" transform="rotate(-90 100 100)"
-                data-tooltip="Поиск кандидатов — 20%"/>
-            </svg>
-            <div class="pareto-chart__center">Сейчас</div>
-          </div>
-          <div class="pareto-chart__legend">
-            <div class="legend-item">
-              <span class="legend-dot" style="background:#E16349"></span>
-              <span>20% — Поиск кандидатов</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-dot" style="background:#4CAF82"></span>
-              <span>80% — Общение и отбор</span>
-            </div>
-          </div>
-          <p class="pareto-chart__caption pareto-chart__caption--green">Фокус на человеческом общении</p>
-        </div>
-      </div>
-
-      <!-- View 2: Filled pie with labels -->
-      <div class="pareto-charts pareto-view" data-view="filled">
-        <!-- Before: green 20%, orange 80% -->
-        <div class="pareto-chart">
-          <p class="pareto-chart__label">Раньше</p>
-          <div class="pareto-chart__donut">
-            <svg viewBox="0 0 200 200" class="donut-svg filled-svg">
-              <!-- Green 20%: 0° to 72° clockwise from top -->
-              <path d="M100,100 L100,5 A95,95 0 0,1 190.40,70.63 Z" fill="#4CAF82"/>
-              <!-- Orange 80%: 72° to 360° clockwise from top -->
-              <path d="M100,100 L190.40,70.63 A95,95 0 1,1 100,5 Z" fill="#E16349"/>
-              <!-- Percentage text inside SVG -->
-              <text x="135" y="55" fill="#fff" font-size="18" font-weight="700" font-family="Inter, sans-serif" text-anchor="middle">20%</text>
-              <text x="65" y="150" fill="#fff" font-size="22" font-weight="700" font-family="Inter, sans-serif" text-anchor="middle">80%</text>
-            </svg>
-          </div>
-          <div class="pie-annotations">
-            <div class="pie-annotation">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" fill="#E16349"/></svg>
-              <span>Поиск кандидатов</span>
-            </div>
-            <div class="pie-annotation">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" fill="#4CAF82"/></svg>
-              <span>Общение и отбор</span>
-            </div>
-          </div>
-          <p class="pareto-chart__caption pareto-chart__caption--muted">Большая трата времени на поиск</p>
-        </div>
-
-        <!-- Arrow -->
-        <div class="pareto-arrow">
-          <svg width="60" height="24" viewBox="0 0 60 24" fill="none">
-            <path d="M0 12H54M54 12L44 2M54 12L44 22" stroke="#E16349" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span class="pareto-arrow__text">Эффект Relevanter</span>
-        </div>
-
-        <!-- After: green 80%, orange 20% -->
-        <div class="pareto-chart">
-          <p class="pareto-chart__label">Сейчас</p>
-          <div class="pareto-chart__donut">
-            <svg viewBox="0 0 200 200" class="donut-svg filled-svg">
-              <!-- Green 80%: 0° to 288° clockwise from top -->
-              <path d="M100,100 L100,5 A95,95 0 1,1 9.60,70.63 Z" fill="#4CAF82"/>
-              <!-- Orange 20%: 288° to 360° clockwise from top -->
-              <path d="M100,100 L9.60,70.63 A95,95 0 0,1 100,5 Z" fill="#E16349"/>
-              <!-- Percentage text inside SVG -->
-              <text x="65" y="55" fill="#fff" font-size="18" font-weight="700" font-family="Inter, sans-serif" text-anchor="middle">20%</text>
-              <text x="135" y="150" fill="#fff" font-size="22" font-weight="700" font-family="Inter, sans-serif" text-anchor="middle">80%</text>
-            </svg>
-          </div>
-          <div class="pie-annotations">
-            <div class="pie-annotation">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" fill="#E16349"/></svg>
-              <span>Поиск кандидатов</span>
-            </div>
-            <div class="pie-annotation">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" fill="#4CAF82"/></svg>
-              <span>Общение и отбор</span>
-            </div>
-          </div>
-          <p class="pareto-chart__caption pareto-chart__caption--green">Фокус на человеческом общении</p>
-        </div>
-      </div>
-
-      <!-- View 3: Thick donut with text in ring segments -->
-      <div class="pareto-charts pareto-view" data-view="diagram">
+      <!-- Diagram chart -->
+      <div class="pareto-charts pareto-view pareto-view--active" data-view="diagram">
         <!-- Before: green 20%, orange 80% -->
         <div class="pareto-chart">
           <div class="pareto-chart__donut">
