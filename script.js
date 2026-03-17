@@ -83,10 +83,10 @@ function calculate() {
   const operationsCost   = scoringCost + dialogsCost + interviewsCost;
   const totalBeforeBonus = subscriptionCost + operationsCost;
 
-  // Bonus
-  const tier = BONUS_TIERS.find(t => operationsCost >= t.threshold);
+  // Bonus (based on total budget, not just operations)
+  const tier = BONUS_TIERS.find(t => totalBeforeBonus >= t.threshold);
   const bonusRate   = tier ? tier.bonus : 0;
-  const bonusAmount = Math.round(operationsCost * bonusRate);
+  const bonusAmount = Math.round(totalBeforeBonus * bonusRate);
   const totalFinal  = totalBeforeBonus - bonusAmount;
 
   // Update result cards
@@ -104,9 +104,9 @@ function calculate() {
   const tierCount = tierThresholds.length;
   let fillPercent = 0;
 
-  if (operationsCost >= tierThresholds[tierCount - 1]) {
+  if (totalBeforeBonus >= tierThresholds[tierCount - 1]) {
     fillPercent = 100;
-  } else if (operationsCost <= 0) {
+  } else if (totalBeforeBonus <= 0) {
     fillPercent = 0;
   } else {
     // Find which segment we're in
@@ -116,8 +116,8 @@ function calculate() {
       const posStart = i === 0 ? 0 : (i / tierCount) * 100;
       const posEnd = ((i + 1) / tierCount) * 100;
 
-      if (operationsCost < segEnd) {
-        const progress = (operationsCost - segStart) / (segEnd - segStart);
+      if (totalBeforeBonus < segEnd) {
+        const progress = (totalBeforeBonus - segStart) / (segEnd - segStart);
         fillPercent = posStart + progress * (posEnd - posStart);
         break;
       }
@@ -130,32 +130,32 @@ function calculate() {
   const tierEls = document.querySelectorAll('.bonus-tier');
   tierEls.forEach(el => {
     const threshold = parseInt(el.dataset.threshold);
-    el.classList.toggle('active', operationsCost >= threshold);
+    el.classList.toggle('active', totalBeforeBonus >= threshold);
   });
 
   // Bonus info text
   if (bonusRate > 0) {
     const bonusPercent = (bonusRate * 100).toFixed(1).replace('.0', '');
     resultEls.bonusInfo.textContent =
-      `При пополнении на ${formatCurrency(operationsCost)} вы получите бонус +${bonusPercent}% — это ${formatCurrency(bonusAmount)} дополнительно`;
+      `При бюджете ${formatCurrency(totalBeforeBonus)} вы получите бонус +${bonusPercent}% — это ${formatCurrency(bonusAmount)} дополнительно`;
     resultEls.bonusDetail.textContent =
       `Из которых ${formatCurrency(bonusAmount)} — начисляется бонусом`;
     resultEls.savingsDetail.textContent =
-      operationsCost > 0
-        ? `Экономия: ${bonusPercent}% от операционных расходов`
+      totalBeforeBonus > 0
+        ? `Экономия: ${bonusPercent}% от общего бюджета`
         : '';
   } else {
     // Find next tier
-    const nextTier = BONUS_TIERS.slice().reverse().find(t => operationsCost < t.threshold);
+    const nextTier = BONUS_TIERS.slice().reverse().find(t => totalBeforeBonus < t.threshold);
     if (nextTier) {
-      const diff = nextTier.threshold - operationsCost;
+      const diff = nextTier.threshold - totalBeforeBonus;
       const nextPercent = (nextTier.bonus * 100).toFixed(1).replace('.0', '');
       resultEls.bonusInfo.textContent =
         `До бонуса +${nextPercent}% не хватает ${formatCurrency(diff)}`;
     } else {
       resultEls.bonusInfo.textContent = '';
     }
-    resultEls.bonusDetail.textContent = 'Бонус не применён — сумма операций ниже 300 000 ₽';
+    resultEls.bonusDetail.textContent = 'Бонус не применён — общий бюджет ниже 300 000 ₽';
     resultEls.savingsDetail.textContent = '';
   }
 
