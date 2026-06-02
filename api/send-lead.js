@@ -22,7 +22,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const { recruiters, scoring, dialogs, interviews, total } = calculator || {};
+  const calculatorData = calculator || {};
+  const recruiters = calculatorData.recruiters;
+  const scoringMonthly = calculatorData.scoringMonthly ?? calculatorData.scoringPerMonth ?? calculatorData.scoring ?? 0;
+  const dialogsMonthly = calculatorData.dialogsMonthly ?? calculatorData.dialogsPerMonth ?? calculatorData.dialogs ?? 0;
+  const interviewsMonthly = calculatorData.interviewsMonthly ?? calculatorData.interviewsPerMonth ?? calculatorData.interviews ?? 0;
+  const annualOperationsTotal = calculatorData.annualOperationsTotal ?? calculatorData.annualTotal ?? calculatorData.total ?? 0;
+  const annualBonusAmount = calculatorData.annualBonusAmount ?? 0;
+  const annualBalanceTotal = calculatorData.annualBalanceTotal ?? annualOperationsTotal + annualBonusAmount;
+
+  const formatNumber = value => Number(value || 0).toLocaleString('ru-RU');
 
   // Format message
   const message = [
@@ -36,11 +45,13 @@ export default async function handler(req, res) {
     comment ? `💬 Комментарий: ${comment}` : '',
     '',
     '📊 Расчёт из калькулятора:',
-    `• Рекрутеров: ${recruiters ?? '—'}`,
-    `• Scoring резюме: ${scoring ? scoring.toLocaleString('ru-RU') : '0'}`,
-    `• AI-диалоги: ${dialogs ? dialogs.toLocaleString('ru-RU') : '0'}`,
-    `• AI-интервью: ${interviews ? interviews.toLocaleString('ru-RU') : '0'}`,
-    `• Итого к оплате: ${total ? total.toLocaleString('ru-RU') : '0'} ₽`,
+    `• Рекрутеров: ${recruiters ? formatNumber(recruiters) : '—'}`,
+    `• Оценка резюме на 1 рекрутера в месяц: ${formatNumber(scoringMonthly)}`,
+    `• AI-диалоги на 1 рекрутера в месяц: ${formatNumber(dialogsMonthly)}`,
+    `• AI-интервью на 1 рекрутера в месяц: ${formatNumber(interviewsMonthly)}`,
+    `• Годовой бюджет операций: ${formatNumber(annualOperationsTotal)} ₽`,
+    `• Бонус на баланс: ${formatNumber(annualBonusAmount)} ₽`,
+    `• На балансе за год: ${formatNumber(annualBalanceTotal)} ₽`,
   ].filter(Boolean).join('\n');
 
   try {

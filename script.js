@@ -3,7 +3,6 @@
    ============================== */
 
 // ---- Pricing ----
-const SUBSCRIPTION_PRICE = 12000;
 const SCORING_PRICE = 1;
 const DIALOG_PRICE = 20;
 const INTERVIEW_PRICE = 80;
@@ -36,17 +35,8 @@ const bonusMode = 'balance';
 const resultEls = {
   bonusBarFill:       document.getElementById('bonus-bar-fill'),
   bonusInfo:          document.getElementById('bonus-info'),
-  subFormula:         document.getElementById('sub-formula'),
   opsLabel:           document.getElementById('ops-total-label'),
 };
-
-function pluralRecruiters(n) {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return 'рекрутер';
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'рекрутера';
-  return 'рекрутеров';
-}
 
 // ---- Number formatting ----
 function formatNumber(n) {
@@ -156,25 +146,16 @@ function resolveExpression(input) {
   }
 }
 
-// ---- Calculator logic ----
-function calcPeriod(recruiters, scoringPerRec, dialogsPerRec, interviewsPerRec, months) {
-  const subscriptionCost = recruiters * SUBSCRIPTION_PRICE; // always annual
-  const scoringCost = scoringPerRec * SCORING_PRICE * recruiters * months;
-  const dialogsCost = dialogsPerRec * DIALOG_PRICE * recruiters * months;
-  const interviewsCost = interviewsPerRec * INTERVIEW_PRICE * recruiters * months;
-  const monthlyOpsPerRec = scoringPerRec * SCORING_PRICE + dialogsPerRec * DIALOG_PRICE + interviewsPerRec * INTERVIEW_PRICE;
-  const operationsCost = monthlyOpsPerRec * recruiters * months;
-  const totalBeforeBonus = subscriptionCost + operationsCost;
-  const tier = BONUS_TIERS.find(t => totalBeforeBonus >= t.threshold);
+function calcPeriod(multiplier, scoringMonthly, dialogsMonthly, interviewsMonthly, months) {
+  const scoringCost = scoringMonthly * SCORING_PRICE * multiplier * months;
+  const dialogsCost = dialogsMonthly * DIALOG_PRICE * multiplier * months;
+  const interviewsCost = interviewsMonthly * INTERVIEW_PRICE * multiplier * months;
+  const operationsCost = scoringCost + dialogsCost + interviewsCost;
+  const tier = BONUS_TIERS.find(t => operationsCost >= t.threshold);
   const bonusRate = tier ? tier.bonus : 0;
-  const bonusAmount = Math.round(totalBeforeBonus * bonusRate);
-  const totalFinal = totalBeforeBonus - bonusAmount;
-  // Operations after proportional bonus share
-  const opsBonusShare = operationsCost > 0 && totalBeforeBonus > 0
-    ? Math.round(bonusAmount * (operationsCost / totalBeforeBonus)) : 0;
-  const opsAfterBonus = operationsCost - opsBonusShare;
-  const firstPayment = subscriptionCost - (bonusAmount - opsBonusShare) + opsAfterBonus;
-  return { subscriptionCost, scoringCost, dialogsCost, interviewsCost, operationsCost, totalBeforeBonus, bonusRate, bonusAmount, totalFinal, opsAfterBonus, firstPayment };
+  const bonusAmount = Math.round(operationsCost * bonusRate);
+  const balanceTotal = operationsCost + bonusAmount;
+  return { scoringCost, dialogsCost, interviewsCost, operationsCost, bonusRate, bonusAmount, balanceTotal };
 }
 
 function setCell(id, value) {
@@ -201,50 +182,38 @@ function setBonusCell(id, bonusRate, bonusAmount) {
 }
 
 function calculate() {
-  const recruiters    = parseInputValue(inputs.recruiters) || 1;
-  const scoringPerRec = parseInputValue(inputs.scoring);
-  const dialogsPerRec = parseInputValue(inputs.dialogs);
-  const interviewsPerRec = parseInputValue(inputs.interviews);
+  const recruiters = parseInputValue(inputs.recruiters) || 1;
+  const scoringMonthly = parseInputValue(inputs.scoring);
+  const dialogsMonthly = parseInputValue(inputs.dialogs);
+  const interviewsMonthly = parseInputValue(inputs.interviews);
 
   // Calculate all periods
   const results = {};
   PERIODS.forEach(p => {
-    results[p.months] = calcPeriod(recruiters, scoringPerRec, dialogsPerRec, interviewsPerRec, p.months);
+    results[p.months] = calcPeriod(recruiters, scoringMonthly, dialogsMonthly, interviewsMonthly, p.months);
   });
-
-  // Update subscription banner
-  const subscriptionTotal = recruiters * SUBSCRIPTION_PRICE;
-  resultEls.subFormula.textContent =
-    `${formatCurrency(SUBSCRIPTION_PRICE)} × ${recruiters} ${pluralRecruiters(recruiters)} = ${formatCurrency(subscriptionTotal)}`;
 
   // Update all views
   PERIODS.forEach(p => {
     const m = p.months;
     const r = results[m];
-    const opsBonusShare = r.operationsCost > 0 && r.totalBeforeBonus > 0
-      ? Math.round(r.bonusAmount * (r.operationsCost / r.totalBeforeBonus)) : 0;
     // Table — breakdown + operations
     setCell(`t-scoring-${m}`, r.scoringCost);
     setCell(`t-dialogs-${m}`, r.dialogsCost);
     setCell(`t-interviews-${m}`, r.interviewsCost);
     setCell(`t-ops-${m}`, r.operationsCost);
-    setBonusCell(`t-bonus-${m}`, r.bonusRate, opsBonusShare);
+    setBonusCell(`t-bonus-${m}`, r.bonusRate, r.bonusAmount);
+    setCell(`t-ops-total-${m}`, r.balanceTotal);
+    setCell(`fp-${m}`, r.operationsCost);
+
     const fpBalanceEl = document.getElementById(`fp-balance-${m}`);
-    if (bonusMode === 'balance') {
-      setCell(`t-ops-total-${m}`, r.operationsCost + opsBonusShare);
-      setCell(`fp-${m}`, r.subscriptionCost + r.operationsCost);
-      if (fpBalanceEl) {
-        if (opsBonusShare > 0) {
-          fpBalanceEl.textContent = `на балансе ${formatCurrency(r.subscriptionCost + r.operationsCost + opsBonusShare)}`;
-          fpBalanceEl.classList.add('visible');
-        } else {
-          fpBalanceEl.classList.remove('visible');
-        }
+    if (fpBalanceEl) {
+      if (r.bonusAmount > 0) {
+        fpBalanceEl.textContent = `на балансе ${formatCurrency(r.balanceTotal)}`;
+        fpBalanceEl.classList.add('visible');
+      } else {
+        fpBalanceEl.classList.remove('visible');
       }
-    } else {
-      setCell(`t-ops-total-${m}`, r.opsAfterBonus);
-      setCell(`fp-${m}`, r.firstPayment);
-      if (fpBalanceEl) fpBalanceEl.classList.remove('visible');
     }
   });
 
@@ -253,7 +222,7 @@ function calculate() {
 
   // Bonus bar — based on annual total
   const annual = results[12];
-  const annualTotal = annual.totalBeforeBonus;
+  const annualTotal = annual.operationsCost;
 
   const tierThresholds = [300_000, 500_000, 700_000, 1_500_000, 3_000_000];
   const tierCount = tierThresholds.length;
@@ -290,10 +259,10 @@ function calculate() {
     const bonusPercent = (annual.bonusRate * 100).toFixed(1).replace('.0', '');
     if (bonusMode === 'balance') {
       resultEls.bonusInfo.textContent =
-        `При годовом бюджете ${formatCurrency(annualTotal)} бонус +${bonusPercent}% — ${formatCurrency(annual.bonusAmount)} будет начислено на баланс`;
+        `При годовом бюджете AI-операций ${formatCurrency(annualTotal)} бонус +${bonusPercent}% — ${formatCurrency(annual.bonusAmount)} будет начислено на баланс`;
     } else {
       resultEls.bonusInfo.textContent =
-        `При годовом бюджете ${formatCurrency(annualTotal)} бонус +${bonusPercent}% — это ${formatCurrency(annual.bonusAmount)} дополнительно`;
+        `При годовом бюджете AI-операций ${formatCurrency(annualTotal)} бонус +${bonusPercent}% — это ${formatCurrency(annual.bonusAmount)} дополнительно`;
     }
   } else {
     const nextTier = BONUS_TIERS.slice().reverse().find(t => annualTotal < t.threshold);
@@ -347,7 +316,6 @@ Object.values(inputs).forEach(input => {
     e.preventDefault();
   });
 });
-
 
 // ---- Lead form ----
 const leadForm = document.getElementById('lead-form');
@@ -447,10 +415,12 @@ if (leadForm) {
       comment,
       calculator: {
         recruiters,
-        scoringPerMonth: scoring,
-        dialogsPerMonth: dialogs,
-        interviewsPerMonth: interviews,
-        annualTotal: annual.totalFinal,
+        scoringMonthly: scoring,
+        dialogsMonthly: dialogs,
+        interviewsMonthly: interviews,
+        annualOperationsTotal: annual.operationsCost,
+        annualBonusAmount: annual.bonusAmount,
+        annualBalanceTotal: annual.balanceTotal,
       },
     };
 

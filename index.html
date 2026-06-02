@@ -45,10 +45,10 @@
         <div class="calc-section">
           <h2 class="calc-section__title">Параметры компании</h2>
 
-          <div class="calc-row calc-row--2">
+          <div class="calc-row calc-row--2" id="recruiters-row">
             <div class="input-group">
               <label class="input-group__label" for="recruiters_count">Количество рекрутеров</label>
-              <span class="input-group__hint">12 000 ₽ / рекрутер / год (разовая подписка)</span>
+              <span class="input-group__hint">Не тарифицируется, только умножает объём операций</span>
               <input type="text" inputmode="numeric" id="recruiters_count" class="input-group__input" placeholder="1" value="1">
             </div>
             <div class="input-group">
@@ -56,7 +56,7 @@
             </div>
           </div>
 
-          <h2 class="calc-section__title">Количество операций на 1 рекрутера в месяц</h2>
+          <h2 class="calc-section__title" id="operations-title">Количество операций на 1 рекрутера в месяц</h2>
           <div class="calc-row calc-row--3">
             <div class="input-group">
               <label class="input-group__label" for="scoring_count">Оценка резюме</label>
@@ -81,47 +81,36 @@
         <div class="calc-section calc-results" id="calc-results">
           <h2 class="calc-section__title">Результат расчёта</h2>
 
-          <!-- Subscription banner -->
-          <div class="subscription-banner">
-            <div class="subscription-banner__content">
-              <div class="subscription-banner__main">
-                <span class="subscription-banner__label">Годовая подписка</span>
-                <span class="subscription-banner__formula" id="sub-formula">12 000 ₽ × 1 рекрутер = 12 000 ₽</span>
-              </div>
-              <span class="subscription-banner__note">Оплачивается один раз в год</span>
-            </div>
-          </div>
-
-          <!-- First payment summary -->
+          <!-- Operations budget summary -->
           <div class="first-payment-summary">
-            <h3 class="first-payment-summary__title">Ваш первый платёж</h3>
+            <h3 class="first-payment-summary__title">Бюджет AI-операций</h3>
             <div class="first-payment-grid">
               <div class="first-payment-item">
                 <span class="first-payment-item__period">Месяц</span>
                 <span class="first-payment-item__value" id="fp-1">—</span>
-                <span class="first-payment-item__detail">подписка + операции<br>за 1 мес.</span>
+                <span class="first-payment-item__detail">стоимость операций<br>за 1 мес.</span>
                 <span class="first-payment-item__balance" id="fp-balance-1"></span>
               </div>
               <div class="first-payment-item">
                 <span class="first-payment-item__period">Квартал</span>
                 <span class="first-payment-item__value" id="fp-3">—</span>
-                <span class="first-payment-item__detail">подписка + операции<br>за 3 мес.</span>
+                <span class="first-payment-item__detail">стоимость операций<br>за 3 мес.</span>
                 <span class="first-payment-item__balance" id="fp-balance-3"></span>
               </div>
               <div class="first-payment-item">
                 <span class="first-payment-item__period">Полугодие</span>
                 <span class="first-payment-item__value" id="fp-6">—</span>
-                <span class="first-payment-item__detail">подписка + операции<br>за 6 мес.</span>
+                <span class="first-payment-item__detail">стоимость операций<br>за 6 мес.</span>
                 <span class="first-payment-item__balance" id="fp-balance-6"></span>
               </div>
               <div class="first-payment-item">
                 <span class="first-payment-item__period">Год</span>
                 <span class="first-payment-item__value" id="fp-12">—</span>
-                <span class="first-payment-item__detail">подписка + операции<br>за 12 мес.</span>
+                <span class="first-payment-item__detail">стоимость операций<br>за 12 мес.</span>
                 <span class="first-payment-item__balance" id="fp-balance-12"></span>
               </div>
             </div>
-            <p class="first-payment-summary__note">Далее оплата только за операции. Можно пополнить баланс в любой момент</p>
+            <p class="first-payment-summary__note">Оплата рассчитывается только по фактическому объёму AI-операций. Бонус начисляется на баланс</p>
           </div>
 
           <!-- Table heading -->
